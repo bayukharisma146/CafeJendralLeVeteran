@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, onAuthStateChanged, signOut } from "../../lib/firebase";
+import { auth, onAuthStateChanged, signOut } from "@/lib/firebase";
 import Link from "next/link";
 
 export default function AdminPage() {
@@ -13,8 +13,7 @@ export default function AdminPage() {
       if (currentUser?.email === "jendralleveteran@gmail.com") {
         setUser(currentUser);
       } else {
-        setUser(null);
-        alert("Unauthorized user");
+        alert("Unauthorized access!");
       }
       setLoading(false);
     });
@@ -28,7 +27,11 @@ export default function AdminPage() {
   };
 
   if (loading) {
-    return <div className="text-white text-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-white">
+        Loading admin panel...
+      </div>
+    );
   }
 
   if (!user) {
@@ -66,22 +69,20 @@ export default function AdminPage() {
         </button>
       </div>
 
-      {/* Panel Navigasi Admin */}
+      {/* Menu Admin */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <AdminCard title="Kelola Galeri" href="/gallery"/>
-        <AdminCard title="Kategori Brunch" href="/menu/brunch"/>
-        <AdminCard title="Reservasi" href="/admin/reservasi"/>
+        <AdminCard title="Kelola Galeri" href="/gallery" />
+        <AdminCard title="Reservasi Incoming" href="/reservasi/incoming" />
+        <AdminCard title="Reservasi Approved" href="/reservasi/approved" />
       </div>
     </div>
   );
 }
 
-// Fungsi AdminCard harus di luar komponen utama
-function AdminCard({ title, href, icon }) {
+function AdminCard({ title, href }) {
   return (
     <Link href={href}>
       <div className="bg-gray-800 p-4 rounded-lg shadow hover:bg-gray-700 transition duration-300 cursor-pointer">
-        <div className="text-3xl mb-2">{icon}</div>
         <h3 className="text-xl font-semibold">{title}</h3>
       </div>
     </Link>

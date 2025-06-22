@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-
 import {
   auth,
   provider,
@@ -14,6 +13,7 @@ import {
   signInWithEmailAndPassword,
   onAuthStateChanged,
 } from "../../lib/firebase";
+import { saveReservation } from "../../lib/reservasi"; // Tambahkan ini
 
 export default function Reservasipage() {
   const [people, setPeople] = useState("");
@@ -21,7 +21,6 @@ export default function Reservasipage() {
   const [time, setTime] = useState("");
   const [ampm, setAmpm] = useState("AM");
   const [date, setDate] = useState(null);
-
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [email, setEmail] = useState("");
@@ -46,13 +45,38 @@ export default function Reservasipage() {
     });
   };
 
-  const loginWithGoogle = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    const form = e.currentTarget;
+    const data = {
+      name: form.name.value,
+      phone: form.phone.value,
+      people,
+      room,
+      date: date?.toISOString().split("T")[0], // YYYY-MM-DD format
+      time,
+      ampm,
+      user_email: user.email,
+    };
+
     try {
-      await signInWithPopup(auth, provider);
+      await saveReservation(data);
+      alert("Reservasi berhasil dikirim!");
+      form.reset();
+      setPeople("");
+      setRoom("");
+      setDate(null);
+      setTime("");
     } catch (error) {
-      setErrorMsg(error.message);
+      alert("Gagal menyimpan reservasi: " + error.message);
     }
   };
+  
 
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
@@ -68,22 +92,16 @@ export default function Reservasipage() {
     }
   };
 
-  const handleLogout = async () => {
-    await signOut(auth);
+  const loginWithGoogle = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      setErrorMsg(error.message);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
-    alert(`Nama: ${e.currentTarget.name.value}
-      Phone: ${e.currentTarget.phone.value}
-      Jumlah Orang: ${people}
-      Ruangan: ${room}
-      Tanggal: ${formatDate(date)}
-      Waktu: ${time} ${ampm}`);
+  const handleLogout = async () => {
+    await signOut(auth);
   };
 
   return (
@@ -154,11 +172,7 @@ export default function Reservasipage() {
                 <select
                   value={room}
                   onChange={(e) => setRoom(e.target.value)}
-                  className={`w-2/3 bg-black px-4 py-2 rounded-md outline-none focus:border-white border ${
-                    room
-                      ? "text-white border-gray-600"
-                      : "text-gray-400 border-gray-600"
-                  }`}
+                  className="w-2/3 bg-black px-4 py-2 rounded-md outline-none border border-gray-600 text-white"
                   required
                 >
                   <option value="" disabled hidden>
@@ -172,7 +186,6 @@ export default function Reservasipage() {
               </div>
 
               <div className="flex gap-2 w-full">
-                {/* Date */}
                 <div className="flex-1">
                   <DatePicker
                     selected={date}
@@ -180,43 +193,27 @@ export default function Reservasipage() {
                     minDate={new Date()}
                     dateFormat="dd/MM/yyyy"
                     placeholderText="Date"
-                    className={`w-full bg-transparent border rounded-md px-4 py-2 outline-none focus:border-white ${
-                      date
-                        ? "text-white border-gray-600"
-                        : "text-gray-400 border-gray-600"
-                    }`}
+                    className="w-full bg-transparent border rounded-md px-4 py-2 text-white border-gray-600"
                     required
                   />
                 </div>
-
-                {/* Time */}
                 <div className="w-[35%]">
                   <input
                     type="text"
-                    placeholder="Hour:Minute"
+                    placeholder="HH:MM"
                     pattern="^(0[1-9]|1[0-2]):([0-5][0-9])$"
-                    title="Format waktu harus HH:MM (01-12)"
-                    className={`w-full bg-transparent border rounded-md px-4 py-2 outline-none focus:border-white ${
-                      time
-                        ? "text-white border-gray-600"
-                        : "text-gray-400 border-gray-600"
-                    }`}
+                    title="Format HH:MM (contoh: 09:30)"
+                    className="w-full bg-transparent border rounded-md px-4 py-2 text-white border-gray-600"
                     value={time}
                     onChange={(e) => setTime(e.target.value)}
                     required
                   />
                 </div>
-
-                {/* AM/PM */}
                 <div className="w-[25%]">
                   <select
                     value={ampm}
                     onChange={(e) => setAmpm(e.target.value)}
-                    className={`w-full bg-black border rounded-md px-4 py-2 outline-none focus:border-white ${
-                      ampm
-                        ? "text-white border-gray-600"
-                        : "text-gray-400 border-gray-600"
-                    }`}
+                    className="w-full bg-black border rounded-md px-4 py-2 text-white border-gray-600"
                     required
                   >
                     <option value="AM">AM</option>
@@ -238,6 +235,7 @@ export default function Reservasipage() {
           </div>
         </div>
       </div>
+
       {showAuthModal && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
           <div className="bg-[#222] p-6 rounded-md w-full max-w-sm text-white">
@@ -277,12 +275,13 @@ export default function Reservasipage() {
                 Login with Google
               </button>
             </div>
-            <div className="mt-4 text-center text-gray-400 text-sm cursor-pointer select-none">
+            <div className="mt-4 text-center text-gray-400 text-sm">
               <span
                 onClick={() => {
                   setIsRegister(!isRegister);
                   setErrorMsg("");
                 }}
+                className="cursor-pointer select-none"
               >
                 {isRegister
                   ? "Already have an account? Login"
