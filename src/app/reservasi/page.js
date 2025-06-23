@@ -153,7 +153,7 @@ export default function Reservasipage() {
               <input
                 name="phone"
                 type="tel"
-                placeholder="Phone Number"
+                placeholder="Phone Number use 62xxx-xxxx-xxxx"
                 className="w-full bg-transparent border border-gray-600 px-4 py-2 rounded-md outline-none focus:border-white"
                 required
               />

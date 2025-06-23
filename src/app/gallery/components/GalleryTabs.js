@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useRef } from "react";
 import { getAuth } from "firebase/auth";
+import { Plus } from "lucide-react";
 
 export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
   const [galleryData, setGalleryData] = useState({});
+  const [loading, setLoading] = useState(true);
   const [previewImage, setPreviewImage] = useState(null);
   const [fabOpen, setFabOpen] = useState(false);
   const [deleteMode, setDeleteMode] = useState(false);
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [tabInput, setTabInput] = useState("food");
-
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const fileInputRef = useRef();
@@ -23,12 +24,15 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
   };
 
   const fetchGallery = async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/gallery");
       const data = await res.json();
       setGalleryData(data);
     } catch (error) {
       console.error("Failed to fetch gallery:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,18 +66,13 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
     try {
       const uploadRes = await fetch("/api/gallery/upload", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`, // jangan set Content-Type manual saat pakai FormData!
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
 
       const uploadData = await uploadRes.json();
-      if (!uploadRes.ok) {
-        return alert(uploadData.error || "Upload gagal");
-      }
+      if (!uploadRes.ok) return alert(uploadData.error || "Upload gagal");
 
-      // Update state langsung tanpa fetch ulang
       setGalleryData((prev) => ({
         ...prev,
         [tabInput]: [
@@ -90,7 +89,6 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
       alert("Terjadi kesalahan saat upload");
     }
   };
-  
 
   const handleDeleteImage = async (id) => {
     const token = await getIdToken();
@@ -121,7 +119,7 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
           <div className="flex items-center justify-center py-10 px-4">
             <form
               onSubmit={handleSubmitMenu}
-              className="w-full max-w-lg p-8 bg-[#181818] rounded-2xl border border-gray-700 shadow-xl relative flex flex-col gap-7"
+              className="w-full max-w-lg p-8 bg-[#181818] rounded-2xl border border-gray-700 shadow-xl flex flex-col gap-6 relative"
             >
               <button
                 type="button"
@@ -130,15 +128,11 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
               >
                 &times;
               </button>
-              <h2 className="text-3xl text-center font-serif text-[#E5D4B6] mb-6">
-                ADMIN
+              <h2 className="text-3xl text-center font-serif text-[#E5D4B6]">
+                Upload Menu
               </h2>
-              <div className="text-[#E5D4B6] text-lg mb-4 text-center">
-                UPLOAD FOTO MENU
-              </div>
 
-              {/* Preview + File Input */}
-              <div className="flex flex-col items-center bg-[#212121] p-4 rounded-xl border border-gray-700 min-h-[220px]">
+              <div className="flex flex-col items-center p-4 bg-[#212121] rounded-xl border border-gray-700">
                 {imagePreview ? (
                   <img
                     src={imagePreview}
@@ -146,23 +140,8 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
                     className="w-full max-w-xs h-40 object-cover rounded mb-4"
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center w-full h-40 mb-4">
-                    <svg
-                      className="w-16 h-16 text-gray-500"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"
-                        stroke="#888"
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M8 11l2 2.5 3-4 4 6.5"
-                        stroke="#888"
-                        strokeWidth="2"
-                      />
-                    </svg>
+                  <div className="h-40 w-full flex items-center justify-center text-gray-500">
+                    Preview Gambar
                   </div>
                 )}
                 <label>
@@ -174,12 +153,11 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
                     ref={fileInputRef}
                   />
                   <span className="inline-block bg-gray-700 text-[#E5D4B6] px-6 py-2 rounded-lg cursor-pointer">
-                    {imagePreview ? "Change Image" : "Upload Image"}
+                    {imagePreview ? "Ubah Gambar" : "Pilih Gambar"}
                   </span>
                 </label>
               </div>
 
-              {/* Pilih Tab */}
               <select
                 value={tabInput}
                 onChange={(e) => setTabInput(e.target.value)}
@@ -190,10 +168,9 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
                 <option value="other">Other</option>
               </select>
 
-              {/* Submit */}
               <button
                 type="submit"
-                className="w-full bg-[#E5D4B6] text-[#1a1a1a] font-bold py-3 rounded-lg text-xl tracking-wide hover:bg-[#d2bc97]"
+                className="w-full bg-[#E5D4B6] text-black font-semibold py-2 rounded-md hover:opacity-90"
               >
                 Save
               </button>
@@ -205,7 +182,7 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
       {/* Main Gallery */}
       <div className={showAddMenu ? "pointer-events-none blur-sm" : ""}>
         {/* Tabs */}
-        <div className="flex justify-center gap-4 mb-8">
+        <div className="flex justify-center gap-4 mb-6">
           {["food", "people", "other"].map((tab) => (
             <button
               key={tab}
@@ -224,81 +201,88 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
           ))}
         </div>
 
-        {/* Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-          {imagesToShow.map(({ id, image_url }) => (
-            <div
-              key={id}
-              className="relative w-full aspect-[3/2] overflow-hidden rounded-xl shadow-lg bg-[#191919]"
-            >
-              <img
-                src={image_url}
-                alt={activeTab}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              {isAdmin && deleteMode && (
-                <button
-                  onClick={() => handleDeleteImage(id)}
-                  className="absolute top-2 right-2 bg-red-700 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold text-xl"
-                >
-                  &minus;
-                </button>
-              )}
-              {!deleteMode && (
-                <div
-                  className="absolute inset-0 cursor-pointer"
-                  onClick={() => setPreviewImage(image_url)}
+        {/* Grid / Loader */}
+        {loading ? (
+          <div className="text-center text-white">Memuat galeri...</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {imagesToShow.map(({ id, image_url }) => (
+              <div
+                key={id}
+                className="relative w-full aspect-[3/2] overflow-hidden rounded-xl shadow-lg bg-[#191919]"
+              >
+                <img
+                  src={image_url}
+                  alt={activeTab}
+                  loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover"
                 />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* FAB */}
-        {isAdmin && (
-          <div>
-            {fabOpen && (
-              <div
-                className="fixed inset-0 bg-black bg-opacity-10 z-40"
-                onClick={() => setFabOpen(false)}
-              />
-            )}
-            <div className="fixed bottom-24 right-8 z-50 flex flex-col items-end gap-2">
-              <div
-                className={`transition-all duration-300 flex flex-col gap-2 ${
-                  fabOpen
-                    ? "opacity-100 translate-y-0 pointer-events-auto"
-                    : "opacity-0 translate-y-12 pointer-events-none"
-                }`}
-              >
-                <button
-                  onClick={openAddMenu}
-                  className="bg-black text-white px-5 py-2 rounded-full shadow hover:bg-gray-800"
-                >
-                  + Tambah Gambar
-                </button>
-                <button
-                  onClick={() => {
-                    setDeleteMode((v) => !v);
-                    setFabOpen(false);
-                  }}
-                  className={`px-5 py-2 rounded-full shadow text-white ${
-                    deleteMode ? "bg-gray-600" : "bg-red-600 hover:bg-red-700"
-                  }`}
-                >
-                  − Hapus Gambar
-                </button>
+                {isAdmin && deleteMode && (
+                  <button
+                    onClick={() => handleDeleteImage(id)}
+                    className="absolute top-2 right-2 bg-red-700 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold text-xl"
+                  >
+                    &minus;
+                  </button>
+                )}
+                {!deleteMode && (
+                  <div
+                    className="absolute inset-0 cursor-pointer"
+                    onClick={() => setPreviewImage(image_url)}
+                  />
+                )}
               </div>
-              <button
-                onClick={() => setFabOpen((v) => !v)}
-                className="w-16 h-16 rounded-full bg-white text-4xl flex items-center justify-center shadow-lg border"
-              >
-                +
-              </button>
-            </div>
+            ))}
           </div>
         )}
       </div>
+
+      {/* FAB */}
+      {isAdmin && (
+        <>
+          {fabOpen && (
+            <button
+              onClick={() => setFabOpen((v) => !v)}
+              className="w-16 h-16 rounded-full bg-white text-yellow-500 text-4xl font-bold flex items-center justify-center shadow-lg border border-gray-300"
+            >
+              +
+            </button>
+          )}
+          <div className="fixed bottom-24 right-8 z-50 flex flex-col items-end gap-2">
+            <div
+              className={`transition-all duration-300 flex flex-col gap-2 ${
+                fabOpen
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 translate-y-12 pointer-events-none"
+              }`}
+            >
+              <button
+                onClick={openAddMenu}
+                className="bg-black text-white px-5 py-2 rounded-full shadow hover:bg-gray-800"
+              >
+                + Tambah Gambar
+              </button>
+              <button
+                onClick={() => {
+                  setDeleteMode((v) => !v);
+                  setFabOpen(false);
+                }}
+                className={`px-5 py-2 rounded-full shadow text-white ${
+                  deleteMode ? "bg-gray-600" : "bg-red-600 hover:bg-red-700"
+                }`}
+              >
+                − Hapus Gambar
+              </button>
+            </div>
+            <button
+              onClick={() => setFabOpen((v) => !v)}
+              className="w-16 h-16 rounded-full bg-white text-4xl flex items-center justify-center shadow-lg border"
+            >
+              +
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Modal Preview */}
       {previewImage && (

@@ -8,6 +8,7 @@ import {
   updateDoc,
   doc,
   addDoc,
+  deleteDoc,
 } from "firebase/firestore";
 
 // Ambil semua reservasi dengan status "incoming"
@@ -36,6 +37,12 @@ export async function getApprovedReservations() {
 export async function updateReservationStatus(id, status) {
   const ref = doc(db, "reservations", id);
   await updateDoc(ref, { status });
+}
+
+// Hapus reservasi berdasarkan ID
+export async function deleteReservation(id) {
+  const ref = doc(db, "reservations", id);
+  await deleteDoc(ref);
 }
 
 // Simpan reservasi baru ke Firestore
