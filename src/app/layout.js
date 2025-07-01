@@ -1,4 +1,3 @@
-
 import "./styles/globals.css";
 import Shell from "./components/shell";
 
@@ -11,7 +10,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className="bg-black text-white min-h-screen">
-        <Shell>{children}</Shell>
+        <Shell>{children}</Shell> {/* Shell berisi Header/Navbar */}
       </body>
     </html>
   );

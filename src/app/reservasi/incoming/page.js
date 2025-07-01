@@ -6,7 +6,6 @@ import { auth, onAuthStateChanged } from "@/lib/firebase";
 import {
   getIncomingReservations,
   updateReservationStatus,
-  deleteReservation,
 } from "@/lib/reservasi";
 
 export default function IncomingReservationPage() {
@@ -36,13 +35,6 @@ export default function IncomingReservationPage() {
   const handleApprove = async (id) => {
     await updateReservationStatus(id, "approved");
     await fetchReservations();
-  };
-
-  const handleDelete = async (id) => {
-    if (confirm("Yakin ingin menghapus reservasi ini?")) {
-      await deleteReservation(id);
-      await fetchReservations();
-    }
   };
 
   const handleSendWAWithStruk = async (res) => {
@@ -81,24 +73,24 @@ export default function IncomingReservationPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-[rgb(0,0,0)] text-black p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center text-white">
+    <div className="min-h-screen bg-black text-white p-6">
+      <h1 className="text-3xl font-bold mb-6 text-center">
         Incoming Reservations
       </h1>
-  
+
       {reservations.length === 0 ? (
-        <p className="text-gray-500 text-center">Tidak ada reservasi baru.</p>
+        <p className="text-gray-400 text-center">Tidak ada reservasi baru.</p>
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
           {reservations.map((res) => (
             <div
               key={res.id}
-              className="bg-grey p-6 rounded-xl shadow-lg border border-gray-200 flex flex-col items-center"
+              className="bg-gray-900 p-6 rounded-xl shadow-lg border border-gray-700 flex flex-col items-center"
             >
               {/* STRUK */}
               <div
                 id={`struk-${res.id}`}
-                className="w-[400px] h-[520px] bg-[#FAF7F0] border border-[#ffffff] rounded-lg shadow-md overflow-hidden font-serif flex flex-col"
+                className="w-[400px] min-h-[520px] bg-[#FAF7F0] border border-[#ffffff] rounded-lg shadow-md overflow-hidden font-serif flex flex-col text-black"
               >
                 {/* HEADER */}
                 <div className="bg-[#1A1A1A] p-6 flex flex-col items-center justify-center">
@@ -111,25 +103,64 @@ export default function IncomingReservationPage() {
                     Reservation Card
                   </h2>
                 </div>
-  
+
                 {/* ISI */}
                 <div className="p-6 flex-1 text-[#1A1A1A] text-sm space-y-3">
-                  <p><strong>Nama:</strong> {res.name.toUpperCase()}</p>
-                  <p><strong>Tanggal:</strong> {res.date}</p>
-                  <p><strong>Jam:</strong> {res.time} {res.ampm}</p>
-                  <p><strong>Jumlah Orang:</strong> {res.people}</p>
-                  <p><strong>Ruangan:</strong> {res.room}</p>
-                  <p><strong>Telepon:</strong> {res.phone.startsWith("0") ? "62" + res.phone.slice(1) : res.phone}</p>
+                  <p>
+                    <strong>Nama:</strong> {res.name?.toUpperCase()}
+                  </p>
+                  <p>
+                    <strong>Tanggal:</strong> {res.date}
+                  </p>
+                  <p>
+                    <strong>Jam:</strong> {res.time}
+                  </p>
+                  <p>
+                    <strong>Jumlah Orang:</strong> {res.people}
+                  </p>
+                  <p>
+                    <strong>Ruangan:</strong> {res.room}
+                  </p>
+                  <p>
+                    <strong>Telepon:</strong>{" "}
+                    {res.phone?.startsWith("0")
+                      ? "62" + res.phone.slice(1)
+                      : res.phone}
+                  </p>
+
+                  {Array.isArray(res.order) && res.order.length > 0 && (
+                    <>
+                      <p>
+                        <strong>Pesanan Menu:</strong>
+                      </p>
+                      <ul className="list-disc ml-6">
+                        {res.order.map((item, index) => (
+                          <li key={index}>
+                            {item.name} - {item.qty}x @Rp
+                            {item.price?.toLocaleString()} ={" "}
+                            <strong>Rp{item.total?.toLocaleString()}</strong>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-2">
+                        <strong>Total Harga:</strong> Rp
+                        {res.order
+                          .reduce((sum, item) => sum + (item.total || 0), 0)
+                          .toLocaleString()}
+                      </p>
+                    </>
+                  )}
                 </div>
-  
+
                 {/* FOOTER */}
                 <div className="text-xs italic text-center text-[#555] p-3 border-t border-[#D6CFC1]">
-                  Terima kasih telah melakukan reservasi di <strong>Jendral Le Veteran</strong>.
+                  Terima kasih telah melakukan reservasi di{" "}
+                  <strong>Jendral Le Veteran</strong>.
                 </div>
               </div>
-  
+
               {/* TOMBOL AKSI */}
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                 <button
                   onClick={() => handleApprove(res.id)}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm"
@@ -141,12 +172,6 @@ export default function IncomingReservationPage() {
                   className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm"
                 >
                   Kirim WA + Struk
-                </button>
-                <button
-                  onClick={() => handleDelete(res.id)}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
-                >
-                  Hapus Reservasi
                 </button>
               </div>
             </div>

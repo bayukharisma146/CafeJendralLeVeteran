@@ -1,20 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { auth, onAuthStateChanged, signOut } from "@/lib/firebase";
 import Link from "next/link";
-import {
-  Moon,
-  User2,
-  Image, // Ikon untuk galeri
-  Clock9, // Ikon untuk incoming reservasi
-  CheckCircle, // Ikon untuk approved reservasi
-} from "lucide-react";
+import { auth, onAuthStateChanged, signOut } from "@/lib/firebase";
+import { getIncomingReservations } from "@/lib/reservasi";
+import { ImageIcon, ClockIcon, CalendarCheck, User2, Moon, UtensilsCrossed } from "lucide-react";
 
 export default function AdminPage() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [incomingCount, setIncomingCount] = useState(0);
 
+  // ✅ Handle login pakai Google
   const handleLogin = () => {
     import("firebase/auth").then(({ GoogleAuthProvider, signInWithPopup }) => {
       const provider = new GoogleAuthProvider();
@@ -27,10 +24,13 @@ export default function AdminPage() {
     setUser(null);
   };
 
+  // ✅ Cek status autentikasi & ambil jumlah incoming reservasi
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser?.email === "jendralleveteran@gmail.com") {
         setUser(currentUser);
+        const data = await getIncomingReservations();
+        setIncomingCount(data.length);
       } else {
         alert("Unauthorized access!");
         setUser(null);
@@ -41,6 +41,7 @@ export default function AdminPage() {
     return () => unsubscribe();
   }, []);
 
+  // ✅ Loading screen
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white bg-black">
@@ -49,6 +50,7 @@ export default function AdminPage() {
     );
   }
 
+  // ✅ Jika belum login
   if (!user) {
     return (
       <div
@@ -74,8 +76,9 @@ export default function AdminPage() {
     );
   }
 
+  // ✅ Jika sudah login
   return (
-    <div className="min-h-screen bg-[#000000] text-white">
+    <div className="min-h-screen bg-[#111827] text-white">
       <main className="p-8 overflow-y-auto min-h-screen">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
@@ -93,17 +96,23 @@ export default function AdminPage() {
           <AdminCard
             title="Kelola Galeri"
             href="/gallery"
-            icon={<Image size={40} className="text-blue-400" />}
+            icon={<ImageIcon size={40} className="text-blue-400" />}
           />
           <AdminCard
             title="Incoming Reservasi"
             href="/reservasi/incoming"
-            icon={<Clock9 size={40} className="text-yellow-400" />}
+            icon={<ClockIcon size={40} className="text-yellow-400" />}
+            count={incomingCount}
           />
           <AdminCard
             title="Approve Reservasi"
             href="/reservasi/approved"
-            icon={<CheckCircle size={40} className="text-green-400" />}
+            icon={<CalendarCheck size={40} className="text-purple-400" />}
+          />
+          <AdminCard
+            title="Kelola Menu"
+            href="/admin/menu"
+            icon={<UtensilsCrossed size={40} className="text-green-500" />}
           />
         </div>
       </main>
@@ -111,11 +120,18 @@ export default function AdminPage() {
   );
 }
 
-function AdminCard({ title, href, icon }) {
+function AdminCard({ title, href, icon, count }) {
   return (
-    <Link href={href}>
+    <Link href={href} className="relative">
       <div className="bg-white text-black p-6 rounded-xl shadow hover:shadow-md transition flex flex-col items-center justify-center gap-4">
-        {icon}
+        <div className="relative">
+          {icon}
+          {count > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+              {count}
+            </span>
+          )}
+        </div>
         <h3 className="text-lg font-semibold text-center">{title}</h3>
       </div>
     </Link>

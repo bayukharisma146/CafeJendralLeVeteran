@@ -78,11 +78,11 @@ export default function Header() {
               <Link href="/menu" className={linkClass}>
                 MENU
               </Link>
-              <Link href="/reservasi" className={linkClass}>
-                RESERVASI
-              </Link>
               <Link href="/venue" className={linkClass}>
                 VENUE
+              </Link>
+              <Link href="/reservasi" className={linkClass}>
+                RESERVASI
               </Link>
               <Link href="/gallery" className={linkClass}>
                 GALLERY
