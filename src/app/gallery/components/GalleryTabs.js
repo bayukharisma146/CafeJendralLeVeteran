@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { getAuth } from "firebase/auth";
-import { Plus } from "lucide-react";
 
 export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
   const [galleryData, setGalleryData] = useState({});
@@ -114,6 +113,7 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
 
   return (
     <>
+      {/* Upload Modal */}
       {showAddMenu && (
         <div className="fixed inset-0 bg-black bg-opacity-90 z-[999]">
           <div className="flex items-center justify-center py-10 px-4">
@@ -129,7 +129,7 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
                 &times;
               </button>
               <h2 className="text-3xl text-center font-serif text-[#E5D4B6]">
-                Upload Menu
+                Upload Gambar
               </h2>
 
               <div className="flex flex-col items-center p-4 bg-[#212121] rounded-xl border border-gray-700">
@@ -201,7 +201,7 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
           ))}
         </div>
 
-        {/* Grid / Loader */}
+        {/* Grid or Loader */}
         {loading ? (
           <div className="text-center text-white">Memuat galeri...</div>
         ) : (
@@ -225,66 +225,59 @@ export default function GalleryTabs({ activeTab, setActiveTab, isAdmin }) {
                     &minus;
                   </button>
                 )}
-                {!deleteMode && (
-                  <div
-                    className="absolute inset-0 cursor-pointer"
-                    onClick={() => setPreviewImage(image_url)}
-                  />
-                )}
+                <div
+                  className="absolute inset-0 cursor-pointer"
+                  onClick={() => {
+                    if (!deleteMode) setPreviewImage(image_url);
+                  }}
+                />
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* FAB */}
+      {/* Floating Action Button (FAB) */}
       {isAdmin && (
-        <>
-          {fabOpen && (
+        <div className="fixed bottom-24 right-8 z-50 flex flex-col items-end gap-2">
+          {/* Action Buttons */}
+          <div
+            className={`transition-all duration-300 flex flex-col gap-2 ${
+              fabOpen
+                ? "opacity-100 translate-y-0"
+                : "opacity-0 translate-y-12 pointer-events-none"
+            }`}
+          >
             <button
-              onClick={() => setFabOpen((v) => !v)}
-              className="w-16 h-16 rounded-full bg-white text-yellow-500 text-4xl font-bold flex items-center justify-center shadow-lg border border-gray-300"
+              onClick={openAddMenu}
+              className="bg-black text-white px-5 py-2 rounded-full shadow hover:bg-gray-800"
             >
-              +
+              + Tambah Gambar
             </button>
-          )}
-          <div className="fixed bottom-24 right-8 z-50 flex flex-col items-end gap-2">
-            <div
-              className={`transition-all duration-300 flex flex-col gap-2 ${
-                fabOpen
-                  ? "opacity-100 translate-y-0"
-                  : "opacity-0 translate-y-12 pointer-events-none"
+            <button
+              onClick={() => {
+                setDeleteMode((v) => !v);
+                setFabOpen(false);
+              }}
+              className={`px-5 py-2 rounded-full shadow text-white ${
+                deleteMode ? "bg-gray-600" : "bg-red-600 hover:bg-red-700"
               }`}
             >
-              <button
-                onClick={openAddMenu}
-                className="bg-black text-white px-5 py-2 rounded-full shadow hover:bg-gray-800"
-              >
-                + Tambah Gambar
-              </button>
-              <button
-                onClick={() => {
-                  setDeleteMode((v) => !v);
-                  setFabOpen(false);
-                }}
-                className={`px-5 py-2 rounded-full shadow text-white ${
-                  deleteMode ? "bg-gray-600" : "bg-red-600 hover:bg-red-700"
-                }`}
-              >
-                − Hapus Gambar
-              </button>
-            </div>
-            <button
-              onClick={() => setFabOpen((v) => !v)}
-              className="w-16 h-16 rounded-full bg-white text-4xl flex items-center justify-center shadow-lg border"
-            >
-              +
+              {deleteMode ? "✔ Selesai Hapus" : "− Hapus Gambar"}
             </button>
           </div>
-        </>
+
+          {/* FAB Button */}
+          <button
+            onClick={() => setFabOpen((v) => !v)}
+            className="w-16 h-16 rounded-full bg-white text-black text-4xl flex items-center justify-center shadow-lg border"
+          >
+            +
+          </button>
+        </div>
       )}
 
-      {/* Modal Preview */}
+      {/* Image Preview Modal */}
       {previewImage && (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
           <div className="relative max-w-3xl w-full px-4">
